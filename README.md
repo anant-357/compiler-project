@@ -7,6 +7,27 @@ Operating System: Linux
 
 Design a compiler pass (LLVM) to take a C++ application as input, generate the program dependence graph (basic block level) for a given program, and partition the program into secure or not secure partitions. Also, print the ID of the desired basic block. You can use numbers to represent the basic block ID.
 
+## How to run
+
+1. Create ll file:
+
+```
+clang++ -S -emit-llvm tests/sample.cpp -o sample.ll
+```
+
+2. Compile customPass:
+
+```
+clang++ -shared -o sample-pass.so sample-pass.cpp `llvm-config --cxxflags --ldflags --libs` -fPIC
+
+```
+
+3. Optimize using customPass:
+
+```
+opt --enable-new-pm=0 -load ./sample-pass.so -sample-pass < sample.ll > /dev/null
+```
+
 ## Contributors
 
 Aditi Agarwal\
