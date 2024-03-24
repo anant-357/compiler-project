@@ -18,8 +18,7 @@ clang++ -S -emit-llvm tests/sample.cpp -o sample.ll
 2. Compile customPass:
 
 ```
-clang++ -shared -o sample-pass.so sample-pass.cpp `llvm-config --cxxflags --ldflags --libs` -fPIC
-
+clang++ -shared -o ./pdg/custom-module-pass.so ./pdg/custom-module-pass.cpp `llvm-config --cxxflags --ldflags --libs` -fPIC
 ```
 
 3. Optimize using customPass:
