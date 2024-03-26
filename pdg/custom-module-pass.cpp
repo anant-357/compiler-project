@@ -4,12 +4,34 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/raw_ostream.h"
+#include <cstddef>
 #include <llvm/IR/Instruction.h>
 #include <llvm/Support/Casting.h>
 #include <map>
 #include <set>
+#include <string>
+#include <utility>
+#include <vector>
+
+#define NO_DEP 0
+#define DEF_USE 1
+#define RAW 2
 
 using namespace llvm;
+
+std::vector<std::pair<Instruction *, uint>> defUseDep(Instruction *I) {
+  std::vector<std::pair<Instruction *, uint>> res;
+  for (Instruction::const_op_iterator cuit = I->op_begin(); cuit != I->op_end();
+       ++cuit) {
+    if (Instruction *inst = dyn_cast<Instruction>(*cuit)) {
+      res.push_back(std::pair(inst, cuit->getOperandNo() + 1));
+    }
+  }
+  return res;
+}
+
+std::vector<std::pair<Instruction *, uint>> RAWDep(Instruction *I){};
+
 namespace {
 struct CustomModulePass : public ModulePass {
   static char ID;
@@ -17,35 +39,42 @@ struct CustomModulePass : public ModulePass {
 
   bool runOnModule(Module &M) override {
     int bb_id = 0;
-    std::map<int, std::set<int>> DDG;
+    std::map<std::string, std::set<std::string>> DDG;
+    std::map<std::string, std::pair<std::set<StringRef>, std::set<StringRef>>>
+        bb_rw;
+    int n_bb = 0;
     for (auto &F : M) {
       for (auto &BB : F) {
-        std::set<Value *> readVars, writtenVars;
-        for (auto &I : BB) {
-          for (int i = 0; i < I.getNumOperands(); i++) {
-            Value *op = I.getOperand(i);
-            if (isa<Instruction>(op) && readVars.count(op)) {
-              DDG[bb_id].insert(
-                  cast<Instruction>(op)->getParent()->getName().str().c_str());
-            }
-            readVars.insert(op);
-
-            if (StoreInst *store = dyn_cast<StoreInst>(&I)) {
-              Value *writtenVal = store->getValueOperand();
-              if (isa<Instruction>(writtenVal) &&
-                  writtenVars.count(writtenVal)) {
-                DDG[bb_id].insert(cast<Instruction>(writtenVal)
-                                      ->getParent()
-                                      ->getName()
-                                      .str()
-                                      .c_str());
-              }
-              writtenVars.insert(writtenVal);
-            }
-          }
-        }
+        BB.setName(std::to_string(n_bb));
+        n_bb++;
       }
-      bb_id++;
+    }
+    for (auto &F : M) {
+      for (auto &BB : F) {
+        std::pair<std::set<StringRef>, std::set<StringRef>> read_write;
+        errs() << "\nBasic Block ID: " << bb_id
+               << "\n-------------------------------------\n"
+               << BB << "\n-------------------------------------\n";
+        for (auto &I : BB) {
+          auto dep_vec = defUseDep(&I);
+          for (auto &dep : dep_vec) {
+            if (dep.second != 0)
+              errs() << "\tfound: definition->" << *dep.first
+                     << ", operand no. -> " << dep.second - 1 << "\t\t";
+          }
+          errs() << "instruction:" << I << "\n";
+        }
+        errs() << "Read Variables:\n";
+        for (auto val : read_write.first) {
+          errs() << "- " << val << "\n";
+        }
+        errs() << "Written Variables:\n";
+        for (auto val : read_write.second) {
+          errs() << "- " << val << "\n";
+        }
+        bb_rw[BB.getName().str()] = read_write;
+        bb_id++;
+      }
     }
     return false;
   }
