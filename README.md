@@ -11,20 +11,28 @@ Design a compiler pass (LLVM) to take a C++ application as input, generate the p
 
 1. Create ll file:
 
-```
+```bash
 clang++ -S -emit-llvm tests/sample.cpp -o sample.ll
 ```
 
 2. Compile customPass:
 
-```
+```bash
 clang++ -shared -o ./pdg/custom-module-pass.so ./pdg/custom-module-pass.cpp `llvm-config --cxxflags --ldflags --libs` -fPIC
 ```
 
 3. Optimize using customPass:
 
+llvm v14.0.0
+
+```bash
+opt --enable-new-pm=0 -load ./pdg/custom-module-pass.so -custom-module-pass < ./tests/sample.ll > /dev/null
 ```
-opt --enable-new-pm=0 -load ./sample-pass.so -sample-pass < sample.ll > /dev/null
+
+llvm v17.0.6
+
+```bash
+opt --bugpoint-enable-legacy-pm -load ./pdg/custom-module-pass.so -custom-module-pass < ./tests/sample.ll > /dev/null
 ```
 
 ## Contributors
