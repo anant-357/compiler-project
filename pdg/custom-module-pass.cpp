@@ -4,7 +4,6 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/raw_ostream.h"
-#include <cstddef>
 #include <llvm/IR/Instruction.h>
 #include <llvm/Support/Casting.h>
 #include <map>
@@ -23,6 +22,7 @@ std::vector<std::pair<Instruction *, uint>> defUseDep(Instruction *I) {
   std::vector<std::pair<Instruction *, uint>> res;
   for (Instruction::const_op_iterator cuit = I->op_begin(); cuit != I->op_end();
        ++cuit) {
+    errs() << "Operand: " << *(cuit->get()) << " ,\t";
     if (Instruction *inst = dyn_cast<Instruction>(*cuit)) {
       res.push_back(std::pair(inst, cuit->getOperandNo() + 1));
     }
@@ -45,8 +45,7 @@ struct CustomModulePass : public ModulePass {
     int n_bb = 0;
     for (auto &F : M) {
       for (auto &BB : F) {
-        BB.setName(std::to_string(n_bb));
-        n_bb++;
+        BB.setName(std::to_string(n_bb++));
       }
     }
     for (auto &F : M) {
@@ -56,22 +55,22 @@ struct CustomModulePass : public ModulePass {
                << "\n-------------------------------------\n"
                << BB << "\n-------------------------------------\n";
         for (auto &I : BB) {
-          auto dep_vec = defUseDep(&I);
-          for (auto &dep : dep_vec) {
-            if (dep.second != 0)
-              errs() << "\tfound: definition->" << *dep.first
-                     << ", operand no. -> " << dep.second - 1 << "\t\t";
-          }
-          errs() << "instruction:" << I << "\n";
+          // auto dep_vec = defUseDep(&I);
+          //  for (auto &dep : dep_vec) {
+          //    if (dep.second != 0)
+          //      errs() << "\tfound: definition->" << *dep.first
+          //             << ", operand no. -> " << dep.second - 1 << "\t\t";
+          //  }
+          // errs() << "instruction:" << I << "\n";
         }
-        errs() << "Read Variables:\n";
-        for (auto val : read_write.first) {
-          errs() << "- " << val << "\n";
-        }
-        errs() << "Written Variables:\n";
-        for (auto val : read_write.second) {
-          errs() << "- " << val << "\n";
-        }
+        // errs() << "Read Variables:\n";
+        // for (auto val : read_write.first) {
+        //   errs() << "- " << val << "\n";
+        // }
+        // errs() << "Written Variables:\n";
+        // for (auto val : read_write.second) {
+        //   errs() << "- " << val << "\n";
+        // }
         bb_rw[BB.getName().str()] = read_write;
         bb_id++;
       }
