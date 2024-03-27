@@ -102,21 +102,24 @@ struct DDGPass : public ModulePass {
     std::map<BasicBlock *, std::pair<std::set<Value *>, std::set<Value *>>>
         bb_rw = get_BB_rw(&M);
 
-    std::map<BasicBlock *, std::set<std::pair<BasicBlock *, Value *>>> DDG;
+    std::map<int, std::set<std::pair<int, Value *>>> DDG;
     for (auto &F : M) {
       for (auto &BB : F) {
         BB.setName(std::to_string(bb_id++));
+        errs() << "BB" << bb_id << "\n------------------------------------"
+               << BB << "------------------------------------------\n";
       }
     }
     // errs() << "size of bb_rw: " << bb_rw.size() << "\n";
     for (auto &F : M) {
       for (auto &BB : F) {
-        std::set<std::pair<BasicBlock *, Value *>> dep_set;
+        std::set<std::pair<int, Value *>> dep_set;
         for (BasicBlock *BB_child : successors(&BB)) {
           for (auto r : bb_rw.at(BB_child).first) {
             if (bb_rw.at(&BB).second.find(r) != bb_rw.at(&BB).second.end()) {
               if (&BB != BB_child)
-                dep_set.insert(std::pair(BB_child, r));
+                dep_set.insert(
+                    std::pair(std::stoi(BB_child->getName().str()), r));
             }
           }
         }
@@ -125,18 +128,18 @@ struct DDGPass : public ModulePass {
           for (auto &dep : dep_vec) {
             if (dep.second)
               if (&BB != dep.first)
-                dep_set.insert(std::pair(dep.first, dep.second));
+                dep_set.insert(std::pair(std::stoi(dep.first->getName().str()),
+                                         dep.second));
           }
         }
-        DDG.insert({&BB, dep_set});
+        DDG.insert({std::stoi(BB.getName().str()), dep_set});
       }
     }
 
     for (auto const &[key, val] : DDG) {
-      errs() << "\n" << key->getName() << "->";
+      errs() << "\n" << key << "->";
       for (auto pairs : val) {
-        errs() << "\t(" << pairs.first->getName() << ", " << *pairs.second
-               << "),\n";
+        errs() << "\t(" << pairs.first << ", " << *pairs.second << "),\n";
       }
     }
     return false;
