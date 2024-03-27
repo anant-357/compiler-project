@@ -49,41 +49,44 @@ define dso_local noundef i32 @main() #2 {
   %1 = alloca i32, align 4
   %2 = alloca i32, align 4
   %3 = alloca i32, align 4
+  %4 = alloca i32, align 4
   store i32 0, ptr %1, align 4
-  %4 = call noundef nonnull align 8 dereferenceable(16) ptr @_ZNSirsERi(ptr noundef nonnull align 8 dereferenceable(16) @_ZSt3cin, ptr noundef nonnull align 4 dereferenceable(4) %2)
-  %5 = load i32, ptr %2, align 4
-  %6 = icmp eq i32 %5, 2
-  br i1 %6, label %7, label %10
+  %5 = call noundef nonnull align 8 dereferenceable(16) ptr @_ZNSirsERi(ptr noundef nonnull align 8 dereferenceable(16) @_ZSt3cin, ptr noundef nonnull align 4 dereferenceable(4) %3)
+  %6 = call noundef nonnull align 8 dereferenceable(16) ptr @_ZNSirsERi(ptr noundef nonnull align 8 dereferenceable(16) @_ZSt3cin, ptr noundef nonnull align 4 dereferenceable(4) %2)
+  %7 = load i32, ptr %2, align 4
+  %8 = icmp eq i32 %7, 2
+  br i1 %8, label %9, label %12
 
-7:                                                ; preds = %0
-  %8 = load i32, ptr %2, align 4
-  %9 = call noundef i32 @_Z4fun1i(i32 noundef %8)
-  br label %21
+9:                                                ; preds = %0
+  %10 = load i32, ptr %3, align 4
+  %11 = call noundef i32 @_Z4fun1i(i32 noundef %10)
+  br label %24
 
-10:                                               ; preds = %0
-  store i32 0, ptr %3, align 4
-  br label %11
+12:                                               ; preds = %0
+  store i32 0, ptr %4, align 4
+  br label %13
 
-11:                                               ; preds = %17, %10
-  %12 = load i32, ptr %3, align 4
-  %13 = icmp slt i32 %12, 5
-  br i1 %13, label %14, label %20
+13:                                               ; preds = %20, %12
+  %14 = load i32, ptr %4, align 4
+  %15 = load i32, ptr %2, align 4
+  %16 = icmp slt i32 %14, %15
+  br i1 %16, label %17, label %23
 
-14:                                               ; preds = %11
-  %15 = load i32, ptr %3, align 4
-  %16 = call noundef i32 @_Z4fun2i(i32 noundef %15)
-  br label %17
+17:                                               ; preds = %13
+  %18 = load i32, ptr %4, align 4
+  %19 = call noundef i32 @_Z4fun2i(i32 noundef %18)
+  br label %20
 
-17:                                               ; preds = %14
-  %18 = load i32, ptr %3, align 4
-  %19 = add nsw i32 %18, 1
-  store i32 %19, ptr %3, align 4
-  br label %11, !llvm.loop !6
+20:                                               ; preds = %17
+  %21 = load i32, ptr %4, align 4
+  %22 = add nsw i32 %21, 1
+  store i32 %22, ptr %4, align 4
+  br label %13, !llvm.loop !6
 
-20:                                               ; preds = %11
-  br label %21
+23:                                               ; preds = %13
+  br label %24
 
-21:                                               ; preds = %20, %7
+24:                                               ; preds = %23, %9
   ret i32 1
 }
 
