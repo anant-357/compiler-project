@@ -13,12 +13,13 @@ int fun2(int x) {
 }
 
 int main() {
-  int c;
+  int c, d;
+  cin >> d;
   cin >> c;
   if (c == 2) {
-    fun1(c);
+    fun1(d);
   } else {
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < c; i++) {
       fun2(i);
     }
   }
