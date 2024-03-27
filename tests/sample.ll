@@ -1,5 +1,5 @@
-; ModuleID = 'sample.cpp'
-source_filename = "sample.cpp"
+; ModuleID = 'tests/sample.cpp'
+source_filename = "tests/sample.cpp"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-linux-gnu"
 
@@ -10,11 +10,13 @@ module asm ".globl _ZSt21ios_base_library_initv"
 %"class.std::ios_base" = type { ptr, i64, i64, i32, i32, i32, ptr, %"struct.std::ios_base::_Words", [8 x %"struct.std::ios_base::_Words"], i32, ptr, %"class.std::locale" }
 %"struct.std::ios_base::_Words" = type { ptr, i64 }
 %"class.std::locale" = type { ptr }
+%"class.std::basic_istream" = type { ptr, i64, %"class.std::basic_ios" }
 
 @_ZSt4cout = external global %"class.std::basic_ostream", align 8
 @.str = private unnamed_addr constant [26 x i8] c"printing arg x in fun1 : \00", align 1
 @.str.1 = private unnamed_addr constant [2 x i8] c"\0A\00", align 1
 @.str.2 = private unnamed_addr constant [26 x i8] c"printing arg x in fun2 : \00", align 1
+@_ZSt3cin = external global %"class.std::basic_istream", align 8
 
 ; Function Attrs: mustprogress noinline optnone sspstrong uwtable
 define dso_local noundef i32 @_Z4fun1i(i32 noundef %0) #0 {
@@ -47,43 +49,48 @@ define dso_local noundef i32 @main() #2 {
   %1 = alloca i32, align 4
   %2 = alloca i32, align 4
   %3 = alloca i32, align 4
+  %4 = alloca i32, align 4
   store i32 0, ptr %1, align 4
-  store i32 1, ptr %2, align 4
-  %4 = load i32, ptr %2, align 4
-  %5 = icmp eq i32 %4, 2
-  br i1 %5, label %6, label %9
-
-6:                                                ; preds = %0
+  %5 = call noundef nonnull align 8 dereferenceable(16) ptr @_ZNSirsERi(ptr noundef nonnull align 8 dereferenceable(16) @_ZSt3cin, ptr noundef nonnull align 4 dereferenceable(4) %3)
+  %6 = call noundef nonnull align 8 dereferenceable(16) ptr @_ZNSirsERi(ptr noundef nonnull align 8 dereferenceable(16) @_ZSt3cin, ptr noundef nonnull align 4 dereferenceable(4) %2)
   %7 = load i32, ptr %2, align 4
-  %8 = call noundef i32 @_Z4fun1i(i32 noundef %7)
-  br label %20
+  %8 = icmp eq i32 %7, 2
+  br i1 %8, label %9, label %12
 
 9:                                                ; preds = %0
-  store i32 0, ptr %3, align 4
-  br label %10
+  %10 = load i32, ptr %3, align 4
+  %11 = call noundef i32 @_Z4fun1i(i32 noundef %10)
+  br label %24
 
-10:                                               ; preds = %16, %9
-  %11 = load i32, ptr %3, align 4
-  %12 = icmp slt i32 %11, 5
-  br i1 %12, label %13, label %19
+12:                                               ; preds = %0
+  store i32 0, ptr %4, align 4
+  br label %13
 
-13:                                               ; preds = %10
-  %14 = load i32, ptr %3, align 4
-  %15 = call noundef i32 @_Z4fun2i(i32 noundef %14)
-  br label %16
+13:                                               ; preds = %20, %12
+  %14 = load i32, ptr %4, align 4
+  %15 = load i32, ptr %2, align 4
+  %16 = icmp slt i32 %14, %15
+  br i1 %16, label %17, label %23
 
-16:                                               ; preds = %13
-  %17 = load i32, ptr %3, align 4
-  %18 = add nsw i32 %17, 1
-  store i32 %18, ptr %3, align 4
-  br label %10, !llvm.loop !6
-
-19:                                               ; preds = %10
+17:                                               ; preds = %13
+  %18 = load i32, ptr %4, align 4
+  %19 = call noundef i32 @_Z4fun2i(i32 noundef %18)
   br label %20
 
-20:                                               ; preds = %19, %6
+20:                                               ; preds = %17
+  %21 = load i32, ptr %4, align 4
+  %22 = add nsw i32 %21, 1
+  store i32 %22, ptr %4, align 4
+  br label %13, !llvm.loop !6
+
+23:                                               ; preds = %13
+  br label %24
+
+24:                                               ; preds = %23, %9
   ret i32 1
 }
+
+declare noundef nonnull align 8 dereferenceable(16) ptr @_ZNSirsERi(ptr noundef nonnull align 8 dereferenceable(16), ptr noundef nonnull align 4 dereferenceable(4)) #1
 
 attributes #0 = { mustprogress noinline optnone sspstrong uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
