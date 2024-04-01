@@ -119,6 +119,45 @@ get_BB_rw(Module *M) {
   }
   return res;
 }
+void get_secure_BB_CDG(std::map<int, std::vector<int>> &CDG,
+                       std::set<std::pair<int, Value *>> ids,
+                       int n) // n will be equal to the value of id
+{
+  std::set<int> secure;
+  std::set<int> notSecure;
+  std::vector<int> visited(n, 0);
+  for (auto i : ids) {
+    std::queue<int> q;
+    q.push(i.first);
+    while (!q.empty()) {
+      int x = q.front();
+      q.pop();
+      visited[x] = 1;
+      secure.insert(x);
+      for (auto it : CDG[x]) {
+        if (!visited[it]) {
+          q.push(it);
+        }
+      }
+    }
+  }
+  for (int i = 0; i < n; i++) {
+    if (visited[i] == 0)
+      notSecure.insert(i);
+  }
+
+  // printing secure basicblocks
+  errs() << "\nSecure: ";
+  for (auto it : secure) {
+    errs() << it << ", ";
+  }
+
+  // printing not secure basicblocks
+  errs() << "\nNot Secure: ";
+  for (auto it : notSecure) {
+    errs() << it << ", ";
+  }
+}
 
 std::pair<std::set<int>, std::set<int>>
 get_secure_BB(std::map<int, std::set<std::pair<int, Value *>>> &DDG,
@@ -154,9 +193,9 @@ get_secure_BB(std::map<int, std::set<std::pair<int, Value *>>> &DDG,
 }
 
 namespace {
-struct DDGPass : public ModulePass {
+struct PDGPass : public ModulePass {
   static char ID;
-  DDGPass() : ModulePass(ID) {}
+  PDGPass() : ModulePass(ID) {}
 
   bool runOnModule(Module &M) override {
     int bb_id = 0;
@@ -173,8 +212,8 @@ struct DDGPass : public ModulePass {
         BB.setName(std::to_string(bb_id++));
         std::set<std::pair<int, Value *>> dep_set;
         DDG.insert({std::stoi(BB.getName().str()), dep_set});
-        errs() << "BB" << bb_id << "\n------------------------------------"
-               << BB << "------------------------------------------\n";
+        errs() << "\n------------------------------------" << BB
+               << "------------------------------------------\n";
       }
     }
     // errs() << "size of bb_rw: " << bb_rw.size() << "\n";
@@ -227,9 +266,17 @@ struct DDGPass : public ModulePass {
     std::pair<std::set<int>, std::set<int>> sns =
         get_secure_BB(DDG, classified_BB, bb_id);
 
-    errs() << "\nClassified: ";
+    errs() << "\nClassified: \n";
     for (auto it : classified_BB) {
       errs() << it.first << ", " << *it.second << "\n";
+    }
+
+    errs() << "\n\nData Dependency Graph: \n";
+    for (auto const &[key, val] : DDG) {
+      errs() << "\n" << key << "->";
+      for (auto pairs : val) {
+        errs() << "\t(" << pairs.first << ", " << *pairs.second << "),\n";
+      }
     }
 
     errs() << "\n Secure: ";
@@ -241,15 +288,38 @@ struct DDGPass : public ModulePass {
       errs() << it << ", ";
     }
 
-    for (auto const &[key, val] : DDG) {
-      errs() << "\n" << key << "->";
-      for (auto pairs : val) {
-        errs() << "\t(" << pairs.first << ", " << *pairs.second << "),\n";
+    // CDG Starts From Here
+    int id = 0;
+    std::map<uintptr_t, int> Addr2Id;
+    std::map<int, std::vector<int>> CDG;
+    for (auto &F : M) {
+      for (auto &BB : F) {
+        uintptr_t Address = reinterpret_cast<uintptr_t>(&BB);
+        Addr2Id[Address] = id++;
       }
     }
+    id = 0;
+    for (auto &F : M) {
+      for (auto &BB : F) {
+        for (BasicBlock *Pred : successors(&BB)) {
+          uintptr_t Address = reinterpret_cast<uintptr_t>(Pred);
+          CDG[id].push_back(Addr2Id[Address]);
+        }
+        id++;
+      }
+    }
+    errs() << "\n\nControl Dependency Graph:\n";
+    for (auto it : CDG) {
+      errs() << it.first << "->";
+      for (auto x : it.second) {
+        errs() << x << " ";
+      }
+      errs() << "\n";
+    }
+    get_secure_BB_CDG(CDG, classified_BB, bb_id);
     return false;
   }
 };
 } // namespace
-char DDGPass::ID = 0;
-static RegisterPass<DDGPass> X("ddg-pass", "DDGPass Pass");
+char PDGPass::ID = 0;
+static RegisterPass<PDGPass> X("pdg-pass", "PDGPass Pass");

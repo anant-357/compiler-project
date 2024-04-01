@@ -7,21 +7,37 @@ Operating System: Linux
 
 Design a compiler pass (LLVM) to take a C++ application as input, generate the program dependence graph (basic block level) for a given program, and partition the program into secure or not secure partitions. Also, print the ID of the desired basic block. You can use numbers to represent the basic block ID.
 
+## How to Install
+
+### Debian Linux
+
+```
+sudo apt-get update
+sudo apt-get install llvm clang
+```
+
+### Arch Linux
+
+```
+sudo pacman -Syu
+sudo pacman -Sy llvm clang
+```
+
 ## How to run
 
 1. Create ll file:
 
 ```bash
-clang++ -S -emit-llvm tests/sample.cpp -o sample.ll
+clang++ -S -emit-llvm tests/sample.cpp -o tests/sample.ll
 ```
 
-2. Compile customPass:
+2. Compile Custom Pass:
 
 ```bash
 clang++ -shared -o ./pdg/custom-module-pass.so ./pdg/custom-module-pass.cpp `llvm-config --cxxflags --ldflags --libs` -fPIC
 ```
 
-3. Optimize using customPass:
+3. Optimize using Custom Pass:
 
 llvm v14.0.0
 
@@ -33,6 +49,15 @@ llvm v17.0.6
 
 ```bash
 opt --bugpoint-enable-legacy-pm -load ./pdg/custom-module-pass.so -custom-module-pass < ./tests/sample.ll > /dev/null
+
+```
+
+### Example for running code in this repository
+
+```
+clang++ -S -emit-llvm tests/sample.cpp -o tests/sample.ll
+clang++ -shared -o ./pdg/pdg-pass.so ./pdg/pdg-pass.cpp `llvm-config --cxxflags --ldflags --libs` -fPIC
+opt --enable-new-pm=0 -load ./pdg/pdg-pass.so -pdg-pass < ./tests/sample.ll > /dev/null
 ```
 
 ## Contributors
