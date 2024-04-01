@@ -59,7 +59,7 @@ std::vector<std::pair<BasicBlock *, Value *>> defUseDep(Instruction *I) {
        ++cuit) {
     if (Instruction *inst = dyn_cast<Instruction>(*cuit)) {
       if (Value *v = dyn_cast<Value>(cuit))
-        res.push_back(std::pair(inst->getParent(), v));
+        res.push_back({inst->getParent(), v});
     }
   }
   return res;
@@ -114,7 +114,7 @@ get_BB_rw(Module *M) {
       std::set<Value *> wv = writtenVariables(&BB);
       // errs() << "BasicBlock no. of written variables" << wv.size() << "\n";
       // errs() << "BasicBlock no. of read variables" << rv.size() << "\n";
-      res.insert({&BB, std::pair(rv, wv)});
+      res.insert({&BB, {rv, wv}});
     }
   }
   return res;
@@ -189,7 +189,7 @@ get_secure_BB(std::map<int, std::set<std::pair<int, Value *>>> &DDG,
     }
   }
 
-  return std::pair(secure, notSecure);
+  return {secure, notSecure};
 }
 
 namespace {
@@ -229,7 +229,7 @@ struct PDGPass : public ModulePass {
                 // "
                 //        << *r << ", RAWDBBn";
                 DDG.at(std::stoi(BB.getName().str()))
-                    .insert(std::pair(std::stoi(BB_child->getName().str()), r));
+                    .insert({std::stoi(BB_child->getName().str()), r});
               }
             }
           }
@@ -239,7 +239,7 @@ struct PDGPass : public ModulePass {
           if (Value *val = dyn_cast<Value>(&I)) {
             if (secure_vars.find(val) != secure_vars.end()) {
               classified_BB.insert(
-                  std::pair(std::stoi(BB.getName().str()), val));
+                  {std::stoi(BB.getName().str()), val});
               secure_BB.insert(std::stoi(BB.getName().str()));
             }
           }
@@ -254,7 +254,7 @@ struct PDGPass : public ModulePass {
                 //        << *dep.second << ", DefUseDep\n";
                 DDG.at(std::stoi(dep.first->getName().str()))
                     .insert(
-                        std::pair(std::stoi(BB.getName().str()), dep.second));
+                        {std::stoi(BB.getName().str()), dep.second});
               }
           }
         }
@@ -317,6 +317,7 @@ struct PDGPass : public ModulePass {
       errs() << "\n";
     }
     get_secure_BB_CDG(CDG, classified_BB, bb_id);
+    errs()<<"\n";
     return false;
   }
 };
