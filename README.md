@@ -1,6 +1,6 @@
 # compiler-project
 
-LLVM/Clang Version: 14.0.0\
+LLVM/Clang Version: 14.0.0, 17.0.6\
 Operating System: Linux
 
 ## Problem Statement
@@ -34,7 +34,7 @@ clang++ -S -emit-llvm tests/sample.cpp -o tests/sample.ll
 2. Compile Custom Pass:
 
 ```bash
-clang++ -shared -o ./pdg/custom-module-pass.so ./pdg/custom-module-pass.cpp `llvm-config --cxxflags --ldflags --libs` -fPIC
+clang++ -shared -o ./pdg/pdg-pass.so ./pdg/pdg-pass.cpp `llvm-config --cxxflags --ldflags --libs` -fPIC
 ```
 
 3. Optimize using Custom Pass:
@@ -42,29 +42,21 @@ clang++ -shared -o ./pdg/custom-module-pass.so ./pdg/custom-module-pass.cpp `llv
 llvm v14.0.0
 
 ```bash
-opt --enable-new-pm=0 -load ./pdg/custom-module-pass.so -custom-module-pass < ./tests/sample.ll > /dev/null
+opt --enable-new-pm=0 -load ./pdg/pdg-pass.so -pdg-pass < ./tests/sample.ll > /dev/null
 ```
 
 llvm v17.0.6
 
 ```bash
-opt --bugpoint-enable-legacy-pm -load ./pdg/custom-module-pass.so -custom-module-pass < ./tests/sample.ll > /dev/null
+opt --bugpoint-enable-legacy-pm -load ./pdg/pdg-pass.so -pdg-pass < ./tests/sample.ll > /dev/null
 
-```
-
-### Example for running code in this repository
-
-```
-clang++ -S -emit-llvm tests/sample.cpp -o tests/sample.ll
-clang++ -shared -o ./pdg/pdg-pass.so ./pdg/pdg-pass.cpp `llvm-config --cxxflags --ldflags --libs` -fPIC
-opt --enable-new-pm=0 -load ./pdg/pdg-pass.so -pdg-pass < ./tests/sample.ll > /dev/null
 ```
 
 ## Contributors
 
-Aditi Agarwal\
-Aman Yadav\
-Anant Sharma
+Aditi Agarwal(2101017)\
+Aman Yadav(2101032)\
+Anant Sharma(2101036)
 
 ## References
 
